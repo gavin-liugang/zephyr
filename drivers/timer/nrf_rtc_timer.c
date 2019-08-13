@@ -16,7 +16,7 @@
 #define RTC NRF_RTC1
 
 #define COUNTER_MAX 0x00ffffff
-#define CYC_PER_TICK (CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC	\
+#define CYC_PER_TICK (sys_clock_hw_cycles_per_sec()	\
 		      / CONFIG_SYS_CLOCK_TICKS_PER_SEC)
 #define MAX_TICKS ((COUNTER_MAX - CYC_PER_TICK) / CYC_PER_TICK)
 
@@ -166,7 +166,7 @@ void z_clock_set_timeout(s32_t ticks, bool idle)
 			}
 		} else if (dt == 1) {
 			/* Too soon, interrupt won't arrive. */
-			set_comparator(cyc + 1);
+			set_comparator(cyc + 2);
 		}
 		/* Otherwise it was two cycles out, we're fine */
 	}

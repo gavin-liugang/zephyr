@@ -5,6 +5,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+# NOTE: This file is part of the old device tree scripts, which will be removed
+# later. They are kept to generate some legacy #defines via the
+# --deprecated-only flag.
+#
+# The new scripts are gen_defines.py, edtlib.py, and dtlib.py.
+
 import sys
 
 from collections import defaultdict
@@ -24,7 +30,8 @@ old_alias_names = False
 
 regs_config = {
     'zephyr,sram'  : 'DT_SRAM',
-    'zephyr,ccm'   : 'DT_CCM'
+    'zephyr,ccm'   : 'DT_CCM',
+    'zephyr,dtcm'  : 'DT_DTCM'
 }
 
 name_config = {
@@ -44,6 +51,7 @@ def str_to_label(s):
             .replace(',', '_') \
             .replace('@', '_') \
             .replace('/', '_') \
+            .replace('.', '_') \
             .replace('+', 'PLUS') \
             .upper()
 
@@ -435,13 +443,6 @@ def extract_controller(node_path, prop, prop_values, index,
         else:
             l_idx = [str(i)]
 
-        # Check node generation requirements
-        try:
-            generation = get_binding(node_path)['properties'
-                    ][prop]['generation']
-        except:
-            generation = ''
-
         l_cellname = str_to_label(generic + '_' + 'controller')
 
         label = l_base + [l_cellname] + l_idx
@@ -509,11 +510,6 @@ def extract_cells(node_path, prop, prop_values, names, index,
                     cell_yaml_names = props
                 else:
                     cell_yaml_names = '#cells'
-        try:
-            generation = get_binding(node_path)['properties'][prop
-                    ]['generation']
-        except:
-            generation = ''
 
         l_cell = [str_to_label(str(generic))]
 

@@ -5,13 +5,12 @@
 #
 
 title: i.MX Clock Controller Module (CCM)
-version: 0.1
 
 description: >
     This is a representation of the i.MX CCM IP node
 
 inherits:
-    !include base.yaml
+    !include [clock.yaml, base.yaml]
 
 properties:
     compatible:
@@ -22,6 +21,9 @@ properties:
 
     label:
       category: required
+
+    "#clock-cells":
+      description: should be 3.
 
 "#cells":
   - name

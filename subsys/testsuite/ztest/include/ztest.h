@@ -44,6 +44,8 @@ extern "C" {
 /* FIXME: Properly integrate with Zephyr's arch specific code */
 #define CONFIG_X86 1
 #define CONFIG_PRINTK 1
+struct esf;
+typedef struct esf z_arch_esf_t;
 #endif
 
 #include <sys/printk.h>

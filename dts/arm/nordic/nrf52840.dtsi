@@ -69,7 +69,6 @@
 		};
 
 		sram0: memory@20000000 {
-			device_type = "memory";
 			compatible = "mmio-sram";
 		};
 
@@ -330,11 +329,6 @@
 			num-isoout-endpoints = <1>;
 			status = "disabled";
 			label = "USBD";
-		};
-
-		usb_cdc: virtualcom {
-			compatible = "nordic,nrf-usbd";
-			label = "CDC_ACM_0";
 		};
 
 		wdt: watchdog@40010000 {

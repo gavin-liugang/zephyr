@@ -14,10 +14,6 @@
 # new Zephyr installation. See the west documentation for more
 # information.
 
-west:
-  url: https://github.com/zephyrproject-rtos/west
-  revision: v0.5.7
-
 manifest:
   defaults:
     remote: upstream
@@ -25,13 +21,19 @@ manifest:
   remotes:
     - name: upstream
       url-base: https://github.com/zephyrproject-rtos
+    - name: civetweb
+      url-base: https://github.com/civetweb
 
   #
   # Please add items below based on alphabetical order
   projects:
     - name: ci-tools
-      revision: 672cb7623b89a41370f95881290a97cccdc35cb0
+      revision: d56f2dd3510e20fa8cf4aad442495c08a658113f
       path: tools/ci-tools
+    - name: civetweb
+      remote: civetweb
+      revision: 99129c5efc907ea613c4b73ccff07581feb58a7a
+      path: modules/lib/civetweb
     - name: esp-idf
       revision: 6835bfc741bf15e98fb7971293913f770df6081f
       path: modules/hal/esp-idf
@@ -51,11 +53,14 @@ manifest:
       revision: 0ec40aed8087f26bd9ac1b70fb5a6c326a6451aa
       path: modules/hal/st
     - name: hal_stm32
-      revision: a08f60768042be9b017796e13c5bb7f977d51a92
+      revision: 272281a1990ec7097f1844778955ed60fe28662a
       path: modules/hal/stm32
     - name: libmetal
       revision: 45e630d6152824f807d3f919958605c4626cbdff
       path: modules/hal/libmetal
+    - name: lvgl
+      revision: 6e3316da412649f02d133231078427e452f65db6
+      path: modules/lib/gui/lvgl
     - name: mbedtls
       revision: ca32746072ce3381f1c9ae46ba6cd34c69f8c0ee
       path: modules/crypto/mbedtls
@@ -71,12 +76,18 @@ manifest:
     - name: open-amp
       revision: 9b591b289e1f37339bd038b5a1f0e6c8ad39c63a
       path: modules/lib/open-amp
+    - name: openthread
+      revision: 0dbecf508e7a79aae8ed9631f1a63fc65478b213
+      path: modules/lib/openthread
     - name: segger
       revision: 6fcf61606d6012d2c44129edc033f59331e268bc
       path: modules/debug/segger
     - name: tinycbor
       path: modules/lib/tinycbor
       revision: 31ae89e4b768612722620cb6cb173a0de4a19cc9
+    - name: littlefs
+      path: modules/fs/littlefs
+      revision: 52b038794b1ba34bd9aaf4df3e37e65558046342
 
   self:
     path: zephyr

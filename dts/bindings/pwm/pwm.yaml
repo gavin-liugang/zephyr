@@ -5,20 +5,15 @@
 #
 
 title: PWM Base Structure
-version: 0.1
 
 description: >
     This binding gives the base structures for all PWM devices
 
-inherits:
-    !include base.yaml
-
 properties:
-    clocks:
-      type: array
-      category: required
-      description: Clock gate information
-      generation: define
-
     label:
       category: required
+
+    "#pwm-cells":
+      type: int
+      category: required
+      description: Number of items to expect in a pwm specifier

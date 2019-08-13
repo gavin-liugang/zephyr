@@ -130,7 +130,8 @@ def main():
         out, err = p.communicate()
         if p.returncode == 0:
             projects = out.decode(sys.getdefaultencoding()).splitlines()
-        elif re.match(r'Error: .* is not in a west installation\..*',
+        elif re.match((r'Error: .* is not in a west installation\.'
+                        '|FATAL ERROR: no west installation found from .*'),
                       err.decode(sys.getdefaultencoding())):
             # Only accept the error from bootstrapper in the event we are
             # outside a west managed project.
@@ -147,10 +148,10 @@ def main():
         projects += args.extra_modules
 
     if args.kconfig_out:
-        kconfig_out_file = open(args.kconfig_out, 'w')
+        kconfig_out_file = open(args.kconfig_out, 'w', encoding="utf-8")
 
     if args.cmake_out:
-        cmake_out_file = open(args.cmake_out, 'w')
+        cmake_out_file = open(args.cmake_out, 'w', encoding="utf-8")
 
     try:
         for project in projects:

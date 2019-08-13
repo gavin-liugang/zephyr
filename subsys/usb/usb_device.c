@@ -942,8 +942,10 @@ static void forward_status_cb(enum usb_dc_status_code status, const u8_t *param)
 	if (status == USB_DC_DISCONNECTED || status == USB_DC_SUSPEND) {
 		if (usb_dev.configured) {
 			usb_cancel_transfers();
-			foreach_ep(disable_interface_ep);
-			usb_dev.configured = false;
+			if (status == USB_DC_DISCONNECTED) {
+				foreach_ep(disable_interface_ep);
+				usb_dev.configured = false;
+			}
 		}
 	}
 
@@ -1170,7 +1172,7 @@ done:
 			return;
 		}
 
-		LOG_DBG("transfer done, ep=%02x, status=%d, size=%u",
+		LOG_DBG("transfer done, ep=%02x, status=%d, size=%zu",
 			trans->ep, trans->status, trans->tsize);
 
 		trans->cb = NULL;
@@ -1226,7 +1228,8 @@ int usb_transfer(u8_t ep, u8_t *data, size_t dlen, unsigned int flags,
 	struct usb_transfer_data *trans = NULL;
 	int i, key, ret = 0;
 
-	LOG_DBG("transfer start, ep=%02x, data=%p, dlen=%d", ep, data, dlen);
+	LOG_DBG("transfer start, ep=%02x, data=%p, dlen=%zd",
+		ep, data, dlen);
 
 	key = irq_lock();
 

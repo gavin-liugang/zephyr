@@ -2,23 +2,14 @@
 
 # Configures CMake for using GCC
 
-find_program(CMAKE_C_COMPILER   gcc    )
-find_program(CMAKE_OBJCOPY      objcopy)
-find_program(CMAKE_OBJDUMP      objdump)
-#find_program(CMAKE_LINKER      ld     ) # Not in use yet
-find_program(CMAKE_AR           ar     )
-find_program(CMAKE_RANLILB      ranlib )
-find_program(CMAKE_READELF      readelf)
-find_program(CMAKE_GDB          gdb    )
+find_program(CMAKE_C_COMPILER gcc)
 
 # -march={pentium,lakemont,...} do not automagically imply -m32, so
 # adding it here.
 
-# There's only one 64bits ARCH (actually: -mx32). Let's exclude it to
-# avoid a confusing game of "who's last on the command line wins".
 # Maybe the -m32/-miamcu FLAGS should all be next to -march= in the
 # longer term?
-if(NOT CONFIG_X86_64)
+if (CONFIG_X86)
   string(PREPEND CMAKE_ASM_FLAGS             "-m32 ")
   string(PREPEND CMAKE_C_FLAGS               "-m32 ")
   string(PREPEND CMAKE_CXX_FLAGS             "-m32 ")
@@ -42,7 +33,7 @@ find_program(CMAKE_CXX_COMPILER ${cplusplus_compiler}     CACHE INTERNAL " " FOR
 # The x32 version of libgcc is usually not available (can't trust gcc
 # -mx32 --print-libgcc-file-name) so don't fail to build for something
 # that is currently not needed. See comments in compiler/gcc/target.cmake
-if (NOT CONFIG_X86_64)
+if (CONFIG_X86)
   # Convert to list as cmake Modules/*.cmake do it
   STRING(REGEX REPLACE " +" ";" PRINT_LIBGCC_ARGS ${CMAKE_C_FLAGS})
   # This libgcc code is partially duplicated in compiler/*/target.cmake
@@ -69,11 +60,12 @@ if(NOT DEFINED NOSYSDEF_CFLAG)
   set(NOSYSDEF_CFLAG -undef)
 endif()
 
-foreach(file_name include)
+foreach(file_name include/stddef.h)
   execute_process(
     COMMAND ${CMAKE_C_COMPILER} --print-file-name=${file_name}
     OUTPUT_VARIABLE _OUTPUT
     )
+  get_filename_component(_OUTPUT "${_OUTPUT}" DIRECTORY)
   string(REGEX REPLACE "\n" "" _OUTPUT "${_OUTPUT}")
 
   list(APPEND NOSTDINC ${_OUTPUT})

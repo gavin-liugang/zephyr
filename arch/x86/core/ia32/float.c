@@ -278,7 +278,7 @@ void k_float_enable(struct k_thread *thread, unsigned int options)
  * The locking isn't really needed when the routine is called by a cooperative
  * thread (since context switching can't occur), but it is harmless.
  */
-int z_arch_float_disable(struct k_thread *thread)
+int z_float_disable(struct k_thread *thread)
 {
 	unsigned int imask;
 
@@ -314,7 +314,7 @@ int z_arch_float_disable(struct k_thread *thread)
  * instruction is executed while CR0[TS]=1. The handler then enables the
  * current thread to use all supported floating point registers.
  */
-void _FpNotAvailableExcHandler(NANO_ESF *pEsf)
+void _FpNotAvailableExcHandler(z_arch_esf_t *pEsf)
 {
 	ARG_UNUSED(pEsf);
 

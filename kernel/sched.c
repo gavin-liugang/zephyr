@@ -297,6 +297,8 @@ void z_time_slice(int ticks)
 		} else {
 			_current_cpu->slice_ticks -= ticks;
 		}
+	} else {
+		_current_cpu->slice_ticks = 0;
 	}
 }
 #else
@@ -483,9 +485,14 @@ void z_thread_priority_set(struct k_thread *thread, int prio)
 		need_sched = z_is_thread_ready(thread);
 
 		if (need_sched) {
-			_priq_run_remove(&_kernel.ready_q.runq, thread);
-			thread->base.prio = prio;
-			_priq_run_add(&_kernel.ready_q.runq, thread);
+			/* Don't requeue on SMP if it's the running thread */
+			if (!IS_ENABLED(CONFIG_SMP) || z_is_thread_queued(thread)) {
+				_priq_run_remove(&_kernel.ready_q.runq, thread);
+				thread->base.prio = prio;
+				_priq_run_add(&_kernel.ready_q.runq, thread);
+			} else {
+				thread->base.prio = prio;
+			}
 			update_cache(1);
 		} else {
 			thread->base.prio = prio;
@@ -548,7 +555,7 @@ void k_sched_unlock(void)
 
 	LOCKED(&sched_spinlock) {
 		++_current->base.sched_locked;
-		update_cache(1);
+		update_cache(0);
 	}
 
 	K_DEBUG("scheduler unlocked (%p:%d)\n",

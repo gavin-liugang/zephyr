@@ -20,8 +20,7 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
-
-#include <gatt/bas.h>
+#include <bluetooth/services/bas.h>
 
 #define CSC_SUPPORTED_LOCATIONS		{ CSC_LOC_OTHER, \
 					  CSC_LOC_FRONT_WHEEL, \
@@ -345,7 +344,7 @@ static void csc_simulation(void)
 static void connected(struct bt_conn *conn, u8_t err)
 {
 	if (err) {
-		printk("Connection failed (err %u)\n", err);
+		printk("Connection failed (err 0x%02x)\n", err);
 	} else {
 		printk("Connected\n");
 	}
@@ -353,7 +352,7 @@ static void connected(struct bt_conn *conn, u8_t err)
 
 static void disconnected(struct bt_conn *conn, u8_t reason)
 {
-	printk("Disconnected (reason %u)\n", reason);
+	printk("Disconnected (reason 0x%02x)\n", reason);
 }
 
 static struct bt_conn_cb conn_callbacks = {
@@ -375,8 +374,6 @@ static void bt_ready(int err)
 
 	printk("Bluetooth initialized\n");
 
-	bas_init();
-
 	err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, ARRAY_SIZE(ad), NULL, 0);
 	if (err) {
 		printk("Advertising failed to start (err %d)\n", err);
@@ -384,6 +381,19 @@ static void bt_ready(int err)
 	}
 
 	printk("Advertising successfully started\n");
+}
+
+static void bas_notify(void)
+{
+	u8_t battery_level = bt_gatt_bas_get_battery_level();
+
+	battery_level--;
+
+	if (!battery_level) {
+		battery_level = 100U;
+	}
+
+	bt_gatt_bas_set_battery_level(battery_level);
 }
 
 void main(void)

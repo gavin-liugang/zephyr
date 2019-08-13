@@ -20,6 +20,7 @@ typedef void (*spi_dw_config_t)(void);
 /* Private structures */
 struct spi_dw_config {
 	u32_t regs;
+	u32_t clock_frequency;
 #ifdef CONFIG_CLOCK_CONTROL
 	const char *clock_name;
 	void *clock_data;
@@ -42,15 +43,8 @@ struct spi_dw_data {
 
 /* Helper macros */
 
-#ifdef DT_SPI_DW_SPI_CLOCK
-#define SPI_DW_CLK_DIVIDER(ssi_clk_hz) \
-		((DT_SPI_DW_SPI_CLOCK / ssi_clk_hz) & 0xFFFF)
-/* provision for soc.h providing a clock that is different than CPU clock */
-#else
-#define SPI_DW_CLK_DIVIDER(ssi_clk_hz) \
-		((CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC / ssi_clk_hz) & 0xFFFF)
-#endif
-
+#define SPI_DW_CLK_DIVIDER(clock_freq, ssi_clk_hz) \
+		((clock_freq / ssi_clk_hz) & 0xFFFF)
 
 #ifdef CONFIG_SPI_DW_ARC_AUX_REGS
 #define Z_REG_READ(__sz) sys_in##__sz
@@ -201,31 +195,10 @@ struct spi_dw_data {
  * Including the right register definition file
  * SoC SPECIFIC!
  */
-#ifdef CONFIG_SOC_QUARK_SE_C1000_SS
-#include "spi_dw_quark_se_ss_regs.h"
-#else
 #include "spi_dw_regs.h"
 
 #define z_extra_clock_on(...)
 #define z_extra_clock_off(...)
-
-#endif
-
-/* Interrupt mask
- * SoC SPECIFIC!
- */
-#if defined(CONFIG_SOC_QUARK_SE_C1000) || defined(CONFIG_SOC_QUARK_SE_C1000_SS)
-#ifdef CONFIG_ARC
-#define _INT_UNMASK     INT_ENABLE_ARC
-#else
-#define _INT_UNMASK	INT_UNMASK_IA
-#endif
-
-#define z_spi_int_unmask(__mask)						\
-	sys_write32(sys_read32(__mask) & _INT_UNMASK, __mask)
-#else
-#define z_spi_int_unmask(...)
-#endif /* CONFIG_SOC_QUARK_SE_C1000 || CONFIG_SOC_QUARK_SE_C1000_SS */
 
 /* Based on those macros above, here are common helpers for some registers */
 DEFINE_MM_REG_WRITE(baudr, DW_SPI_REG_BAUDR, 16)

@@ -22,8 +22,7 @@
 #include <bluetooth/uuid.h>
 #include <bluetooth/gatt.h>
 
-#include <gatt/bas.h>
-#include <gatt/hog.h>
+#include "hog.h"
 
 static const struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
@@ -56,7 +55,7 @@ static void disconnected(struct bt_conn *conn, u8_t reason)
 
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
 
-	printk("Disconnected from %s (reason %u)\n", addr, reason);
+	printk("Disconnected from %s (reason 0x%02x)\n", addr, reason);
 }
 
 static void security_changed(struct bt_conn *conn, bt_security_t level)
@@ -83,7 +82,6 @@ static void bt_ready(int err)
 
 	printk("Bluetooth initialized\n");
 
-	bas_init();
 	hog_init();
 
 	if (IS_ENABLED(CONFIG_SETTINGS)) {

@@ -50,9 +50,6 @@
 
 #define DB_HASH_TIMEOUT	K_MSEC(10)
 
-/* Linker-defined symbols bound to the bt_gatt_service_static structs */
-extern const struct bt_gatt_service_static _bt_services_start[];
-extern const struct bt_gatt_service_static _bt_services_end[];
 static u16_t last_static_handle;
 
 /* Persistent storage format for GATT CCC */
@@ -423,6 +420,15 @@ static void db_hash_gen(bool store)
 		return;
 	}
 
+	/**
+	 * Core 5.1 does not state the endianess of the hash.
+	 * However Vol 3, Part F, 3.3.1 says that multi-octet Characteristic
+	 * Values shall be LE unless otherwise defined. PTS expects hash to be
+	 * in little endianess as well. bt_smp_aes_cmac calculates the hash in
+	 * big endianess so we have to swap.
+	 */
+	sys_mem_swap(db_hash, sizeof(db_hash));
+
 	BT_HEXDUMP_DBG(db_hash, sizeof(db_hash), "Hash: ");
 
 	if (IS_ENABLED(CONFIG_BT_SETTINGS) && store) {
@@ -734,22 +740,23 @@ static void ccc_delayed_store(struct k_work *work)
 
 void bt_gatt_init(void)
 {
-	const struct bt_gatt_service_static *svc;
-
 	if (!atomic_cas(&init, 0, 1)) {
 		return;
 	}
 
-	for (svc = _bt_services_start; svc < _bt_services_end; svc++) {
+	Z_STRUCT_SECTION_FOREACH(bt_gatt_service_static, svc) {
 		last_static_handle += svc->attr_count;
 	}
 
-#if defined(CONFIG_BT_GATT_DYNAMIC_DB)
 #if defined(CONFIG_BT_GATT_CACHING)
 	k_delayed_work_init(&db_hash_work, db_hash_process);
-	db_hash_gen(false);
-#endif /* COFNIG_BT_GATT_CACHING */
 
+	/* Submit work to Generate initial hash as there could be static
+	 * services already in the database.
+	 */
+	k_delayed_work_submit(&db_hash_work, DB_HASH_TIMEOUT);
+#endif /* CONFIG_BT_GATT_CACHING */
+#if defined(CONFIG_BT_GATT_DYNAMIC_DB)
 	k_delayed_work_init(&gatt_sc.work, sc_process);
 #endif /* CONFIG_BT_GATT_DYNAMIC_DB */
 #if defined(CONFIG_BT_SETTINGS_CCC_STORE_ON_WRITE)
@@ -933,11 +940,9 @@ static u8_t get_service_handles(const struct bt_gatt_attr *attr,
 
 static u16_t find_static_attr(const struct bt_gatt_attr *attr)
 {
-	const struct bt_gatt_service_static *static_svc;
-	u16_t handle;
+	u16_t handle = 1;
 
-	for (static_svc = _bt_services_start, handle = 1;
-	     static_svc < _bt_services_end; static_svc++) {
+	Z_STRUCT_SECTION_FOREACH(bt_gatt_service_static, static_svc) {
 		for (int i = 0; i < static_svc->attr_count; i++, handle++) {
 			if (attr == &static_svc->attrs[i]) {
 				return handle;
@@ -1088,11 +1093,9 @@ void bt_gatt_foreach_attr_type(u16_t start_handle, u16_t end_handle,
 	}
 
 	if (start_handle <= last_static_handle) {
-		const struct bt_gatt_service_static *static_svc;
-		u16_t handle;
+		u16_t handle = 1;
 
-		for (static_svc = _bt_services_start, handle = 1;
-		     static_svc < _bt_services_end; static_svc++) {
+		Z_STRUCT_SECTION_FOREACH(bt_gatt_service_static, static_svc) {
 			/* Skip ahead if start is not within service handles */
 			if (handle + static_svc->attr_count < start_handle) {
 				handle += static_svc->attr_count;
@@ -1835,7 +1838,8 @@ static void remove_subscriptions(struct bt_conn *conn)
 		}
 
 		if (!bt_addr_le_is_bonded(conn->id, &conn->le.dst) ||
-		    (params->flags & BT_GATT_SUBSCRIBE_FLAG_VOLATILE)) {
+		    (atomic_test_bit(params->flags,
+				     BT_GATT_SUBSCRIBE_FLAG_VOLATILE))) {
 			/* Remove subscription */
 			params->value = 0U;
 			gatt_subscription_remove(conn, prev, params);
@@ -2596,10 +2600,11 @@ int bt_gatt_discover(struct bt_conn *conn,
 		return gatt_read_type(conn, params);
 	case BT_GATT_DISCOVER_DESCRIPTOR:
 		/* Only descriptors can be filtered */
-		if (!bt_uuid_cmp(params->uuid, BT_UUID_GATT_PRIMARY) ||
-		    !bt_uuid_cmp(params->uuid, BT_UUID_GATT_SECONDARY) ||
-		    !bt_uuid_cmp(params->uuid, BT_UUID_GATT_INCLUDE) ||
-		    !bt_uuid_cmp(params->uuid, BT_UUID_GATT_CHRC)) {
+		if (params->uuid &&
+		    (!bt_uuid_cmp(params->uuid, BT_UUID_GATT_PRIMARY) ||
+		     !bt_uuid_cmp(params->uuid, BT_UUID_GATT_SECONDARY) ||
+		     !bt_uuid_cmp(params->uuid, BT_UUID_GATT_INCLUDE) ||
+		     !bt_uuid_cmp(params->uuid, BT_UUID_GATT_CHRC))) {
 			return -EINVAL;
 		}
 	 /* Fallthrough. */
@@ -3018,6 +3023,8 @@ static void gatt_write_ccc_rsp(struct bt_conn *conn, u8_t err,
 
 	BT_DBG("err 0x%02x", err);
 
+	atomic_clear_bit(params->flags, BT_GATT_SUBSCRIBE_FLAG_WRITE_PENDING);
+
 	/* if write to CCC failed we remove subscription and notify app */
 	if (err) {
 		sys_snode_t *node, *tmp, *prev = NULL;
@@ -3054,6 +3061,8 @@ static int gatt_write_ccc(struct bt_conn *conn, u16_t handle, u16_t value,
 	net_buf_add_le16(buf, value);
 
 	BT_DBG("handle 0x%04x value 0x%04x", handle, value);
+
+	atomic_set_bit(params->flags, BT_GATT_SUBSCRIBE_FLAG_WRITE_PENDING);
 
 	return gatt_send(conn, buf, func, params, NULL);
 }
@@ -3128,6 +3137,11 @@ int bt_gatt_unsubscribe(struct bt_conn *conn,
 		if (params == tmp) {
 			found = true;
 			sys_slist_remove(&subscriptions, prev, &tmp->node);
+			/* Attempt to cancel if write is pending */
+			if (atomic_test_bit(params->flags,
+			    BT_GATT_SUBSCRIBE_FLAG_WRITE_PENDING)) {
+				bt_gatt_cancel(conn, params);
+			}
 			continue;
 		} else {
 			prev = &tmp->node;

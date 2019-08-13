@@ -13,14 +13,14 @@
 #ifndef ZEPHYR_INCLUDE_NET_SOCKET_NET_MGMT_H_
 #define ZEPHYR_INCLUDE_NET_SOCKET_NET_MGMT_H_
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <zephyr/types.h>
 #include <net/net_ip.h>
 #include <net/net_if.h>
 #include <net/net_mgmt.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @brief Socket NET_MGMT library
@@ -52,7 +52,7 @@ extern "C" {
  * When used with bind(), the nm_pid field of the sockaddr_nm can be
  * filled with the calling thread' own id. The nm_pid serves here as the local
  * address of this net_mgmt socket. The application is responsible for picking
- * a unique 32-bit integer to fill in nm_pid.
+ * a unique integer value to fill in nm_pid.
  */
 struct sockaddr_nm {
 	/** AF_NET_MGMT address family. */
@@ -64,7 +64,7 @@ struct sockaddr_nm {
 	/** Thread id or similar that is used to separate the different
 	 * sockets. Application can decide how the pid is constructed.
 	 */
-	u32_t nm_pid;
+	uintptr_t nm_pid;
 
 	/** net_mgmt mask */
 	u32_t nm_mask;

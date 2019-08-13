@@ -271,6 +271,21 @@ static inline ssize_t zsock_send(int sock, const void *buf, size_t len,
 }
 
 /**
+ * @brief Send data to an arbitrary network address
+ *
+ * @details
+ * @rst
+ * See `POSIX.1-2017 article
+ * <http://pubs.opengroup.org/onlinepubs/9699919799/functions/sendmsg.html>`__
+ * for normative description.
+ * This function is also exposed as ``sendmsg()``
+ * if :option:`CONFIG_NET_SOCKETS_POSIX_NAMES` is defined.
+ * @endrst
+ */
+__syscall ssize_t zsock_sendmsg(int sock, const struct msghdr *msg,
+				int flags);
+
+/**
  * @brief Receive data from an arbitrary network address
  *
  * @details
@@ -597,6 +612,12 @@ static inline ssize_t sendto(int sock, const void *buf, size_t len, int flags,
 	return zsock_sendto(sock, buf, len, flags, dest_addr, addrlen);
 }
 
+static inline ssize_t sendmsg(int sock, const struct msghdr *message,
+			      int flags)
+{
+	return zsock_sendmsg(sock, message, flags);
+}
+
 static inline ssize_t recvfrom(int sock, void *buf, size_t max_len, int flags,
 			       struct sockaddr *src_addr, socklen_t *addrlen)
 {
@@ -746,6 +767,14 @@ static inline char *inet_ntop(sa_family_t family, const void *src, char *dst,
 /** sockopt: Socket priority */
 #define SO_PRIORITY 12
 
+/** sockopt: Socket TX time (when the data should be sent) */
+#define SO_TXTIME 61
+#define SCM_TXTIME SO_TXTIME
+
+/* Socket options for SOCKS5 proxy */
+/** sockopt: Enable SOCKS5 for Socket */
+#define SO_SOCKS5 60
+
 /** @cond INTERNAL_HIDDEN */
 /**
  * @brief Registration information for a given BSD socket family.
@@ -760,9 +789,8 @@ struct net_socket_register {
 	(__net_socket_register_##socket_name)
 
 #define NET_SOCKET_REGISTER(socket_name, _family, _is_supported, _handler) \
-	static const struct net_socket_register				\
-			(NET_SOCKET_GET_NAME(socket_name)) __used	\
-	__attribute__((__section__(".net_socket_register.init"))) = {	\
+	static const Z_STRUCT_SECTION_ITERABLE(net_socket_register,	\
+			NET_SOCKET_GET_NAME(socket_name)) = {		\
 		.family = _family,					\
 		.is_supported = _is_supported,				\
 		.handler = _handler,					\

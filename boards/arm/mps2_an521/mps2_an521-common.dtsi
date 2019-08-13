@@ -4,22 +4,31 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+sysclk: system-clock {
+	compatible = "fixed-clock";
+	clock-frequency = <25000000>;
+	#clock-cells = <0>;
+};
+
 timer0: timer@0 {
 	compatible = "arm,cmsdk-timer";
 	reg = <0x0 0x1000>;
 	interrupts = <3 3>;
+	label = "TIMER_0";
 };
 
 timer1: timer@1000 {
 	compatible = "arm,cmsdk-timer";
 	reg = <0x1000 0x1000>;
 	interrupts = <4 3>;
+	label = "TIMER_1";
 };
 
 dtimer0: dtimer@2000 {
 	compatible = "arm,cmsdk-dtimer";
 	reg = <0x2000 0x1000>;
 	interrupts = <5 3>;
+	label = "DTIMER_0";
 };
 
 mhu0: mhu@3000 {
@@ -40,29 +49,38 @@ gpio0: gpio@100000 {
 	compatible = "arm,cmsdk-gpio";
 	reg = <0x100000 0x1000>;
 	interrupts = <68 3>;
+	gpio-controller;
+	#gpio-cells = <2>;
 };
 
 gpio1: gpio@101000 {
 	compatible = "arm,cmsdk-gpio";
 	reg = <0x101000 0x1000>;
 	interrupts = <69 3>;
+	gpio-controller;
+	#gpio-cells = <2>;
 };
 
 gpio2: gpio@102000 {
 	compatible = "arm,cmsdk-gpio";
 	reg = <0x102000 0x1000>;
 	interrupts = <70 3>;
+	gpio-controller;
+	#gpio-cells = <2>;
 };
 
 gpio3: gpio@103000 {
 	compatible = "arm,cmsdk-gpio";
 	reg = <0x103000 0x1000>;
 	interrupts = <71 3>;
+	gpio-controller;
+	#gpio-cells = <2>;
 };
 
 wdog0: wdog@81000 {
 	compatible = "arm,cmsdk-watchdog";
 	reg = <0x81000 0x1000>;
+	clocks = <&sysclk>;
 };
 
 uart0: uart@200000 {
@@ -70,6 +88,7 @@ uart0: uart@200000 {
 	reg = <0x200000 0x1000>;
 	interrupts = <33 3 32 3>;
 	interrupt-names = "tx", "rx";
+	clocks = <&sysclk>;
 	current-speed = <115200>;
 	label = "UART_0";
 };
@@ -79,6 +98,7 @@ uart1: uart@201000 {
 	reg = <0x201000 0x1000>;
 	interrupts = <35 3 34 3>;
 	interrupt-names = "tx", "rx";
+	clocks = <&sysclk>;
 	current-speed = <115200>;
 	label = "UART_1";
 };
@@ -88,6 +108,7 @@ uart2: uart@202000 {
 	reg = <0x202000 0x1000>;
 	interrupts = <37 3 36 3>;
 	interrupt-names = "tx", "rx";
+	clocks = <&sysclk>;
 	current-speed = <115200>;
 	label = "UART_2";
 };
@@ -97,6 +118,7 @@ uart3: uart@203000 {
 	reg = <0x203000 0x1000>;
 	interrupts = <39 3 38 3>;
 	interrupt-names = "tx", "rx";
+	clocks = <&sysclk>;
 	current-speed = <115200>;
 	label = "UART_3";
 };
@@ -106,6 +128,7 @@ uart4: uart@204000 {
 	reg = <0x204000 0x1000>;
 	interrupts = <41 3 40 3>;
 	interrupt-names = "tx", "rx";
+	clocks = <&sysclk>;
 	current-speed = <115200>;
 	label = "UART_4";
 };

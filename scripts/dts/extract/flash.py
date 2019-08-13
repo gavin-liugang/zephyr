@@ -4,6 +4,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+# NOTE: This file is part of the old device tree scripts, which will be removed
+# later. They are kept to generate some legacy #defines via the
+# --deprecated-only flag.
+#
+# The new scripts are gen_defines.py, edtlib.py, and dtlib.py.
+
 from extract.globals import *
 from extract.directive import DTDirective
 
@@ -40,6 +46,7 @@ class DTFlash(DTDirective):
 
         partition_label = str_to_label(node['props']['label'])
         prop_def["DT_FLASH_AREA_{}_LABEL".format(area_id)] = partition_label
+        deprecated_main.append("DT_FLASH_AREA_{}_LABEL".format(area_id))
         prop_def["DT_FLASH_AREA_{}_ID".format(partition_label)] = area_id
 
         reg = node['props']['reg']
@@ -71,6 +78,7 @@ class DTFlash(DTDirective):
         partition_label = str_to_label(node['props']['label'])
 
         label = "DT_FLASH_AREA_{}_LABEL".format(partition_label)
+        deprecated_main.append(label)
         prop_def[label] = '"' + node['props']['label'] + '"'
         add_legacy_alias(prop_alias, label)
 

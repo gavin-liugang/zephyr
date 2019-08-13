@@ -6,6 +6,12 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
+# NOTE: This file is part of the old device tree scripts, which will be removed
+# later. They are kept to generate some legacy #defines via the
+# --deprecated-only flag.
+#
+# The new scripts are gen_defines.py, edtlib.py, and dtlib.py.
+
 # vim: ai:ts=4:sw=4
 
 import os, fnmatch
@@ -78,16 +84,18 @@ def generate_prop_defines(node_path, prop):
         compatible.extract(node_path, prop, def_label)
     elif 'clocks' in prop:
         clocks.extract(node_path, prop, def_label)
-    elif 'pwms' in prop or 'gpios' in prop:
+    elif 'pwms' in prop or '-gpios' in prop or prop == "gpios":
         prop_values = reduced[node_path]['props'][prop]
         generic = prop[:-1]  # Drop the 's' from the prop
 
+        # Deprecated the non-'S' form
         extract_controller(node_path, prop, prop_values, 0,
-                           def_label, generic)
+                           def_label, generic, deprecate=True)
         extract_controller(node_path, prop, prop_values, 0,
                            def_label, prop)
+        # Deprecated the non-'S' form
         extract_cells(node_path, prop, prop_values,
-                      names, 0, def_label, generic)
+                      names, 0, def_label, generic, deprecate=True)
         extract_cells(node_path, prop, prop_values,
                       names, 0, def_label, prop)
     else:
@@ -116,7 +124,7 @@ def generate_node_defines(node_path):
 
     # Generate per-property ('foo = <1 2 3>', etc.) #defines
     for yaml_prop, yaml_val in get_binding(node_path)['properties'].items():
-        if 'generation' not in yaml_val:
+        if yaml_prop.startswith("#") or yaml_prop.endswith("-map"):
             continue
 
         match = False
@@ -235,7 +243,7 @@ def check_binding_properties(node):
     if 'title' not in node:
         print("extract_dts_includes.py: node without 'title' -", node)
 
-    for prop in 'title', 'version', 'description':
+    for prop in 'title', 'description':
         if prop not in node:
             node[prop] = "<unknown {}>".format(prop)
             print("extract_dts_includes.py: '{}' property missing "
@@ -272,7 +280,7 @@ def write_conf(f):
         f.write('\n')
 
 
-def write_header(f):
+def write_header(f, deprecated_only):
     f.write('''\
 /**********************************************
 *                 Generated include file
@@ -303,6 +311,10 @@ def write_header(f):
                 deprecated_warn = False
                 if prop in deprecated_main:
                     deprecated_warn = True
+                if not prop.startswith('DT_'):
+                    deprecated_warn = True
+                if deprecated_only and not deprecated_warn:
+                    continue
                 f.write(define_str(prop, defs[node][prop], value_tabs, deprecated_warn))
 
         for alias in sorted(defs[node]['aliases']):
@@ -310,10 +322,12 @@ def write_header(f):
             deprecated_warn = False
             # Mark any non-DT_ prefixed define as deprecated except
             # for now we special case LED, SW, and *PWM_LED*
-            if not alias.startswith(('DT_', 'LED', 'SW')) and not 'PWM_LED' in alias:
+            if not alias.startswith('DT_'):
                 deprecated_warn = True
             if alias in deprecated:
                 deprecated_warn = True
+            if deprecated_only and not deprecated_warn:
+                continue
             f.write(define_str(alias, alias_target, value_tabs, deprecated_warn))
 
         f.write('\n')
@@ -469,6 +483,8 @@ def parse_arguments():
     parser.add_argument("--old-alias-names", action='store_true',
                         help="Generate aliases also in the old way, without "
                              "compatibility information in their labels")
+    parser.add_argument("--deprecated-only", action='store_true',
+                        help="Generate only the deprecated defines")
     return parser.parse_args()
 
 
@@ -523,7 +539,7 @@ def main():
 
     if args.include is not None:
         with open(args.include, 'w', encoding='utf-8') as f:
-            write_header(f)
+            write_header(f, args.deprecated_only)
 
 
 if __name__ == '__main__':

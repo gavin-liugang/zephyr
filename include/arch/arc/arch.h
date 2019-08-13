@@ -29,6 +29,12 @@
 #include <arch/arc/v2/asm_inline.h>
 #include <arch/common/addr_types.h>
 #include "v2/sys_io.h"
+#ifdef CONFIG_ARC_CONNECT
+#include <arch/arc/v2/arc_connect.h>
+#endif
+#ifdef CONFIG_ARC_HAS_SECURE
+#include <arch/arc/v2/secureshield/arc_secure.h>
+#endif
 #endif
 
 #ifdef __cplusplus

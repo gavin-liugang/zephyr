@@ -95,6 +95,9 @@ char *net_sprint_ll_addr_buf(const u8_t *ll, u8_t ll_len,
 	case 6:
 		len = 6U;
 		break;
+	case 2:
+		len = 2U;
+		break;
 	default:
 		len = 6U;
 		break;
@@ -847,4 +850,22 @@ int net_bytes_from_str(u8_t *buf, int buf_len, const char *src)
 	}
 
 	return 0;
+}
+
+const char *net_family2str(sa_family_t family)
+{
+	switch (family) {
+	case AF_UNSPEC:
+		return "AF_UNSPEC";
+	case AF_INET:
+		return "AF_INET";
+	case AF_INET6:
+		return "AF_INET6";
+	case AF_PACKET:
+		return "AF_PACKET";
+	case AF_CAN:
+		return "AF_CAN";
+	}
+
+	return NULL;
 }

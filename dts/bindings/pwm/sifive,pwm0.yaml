@@ -5,13 +5,12 @@
 #
 
 title: SiFive PWM
-version: 0.1
 
 description: >
     This binding gives a base representation of the SiFive PWM
 
 inherits:
-    !include pwm.yaml
+    !include [pwm.yaml, base.yaml]
 
 properties:
     compatible:
@@ -21,7 +20,6 @@ properties:
       type: int
       category: optional
       description: Clock frequency information for PWM operation
-      generation: define
 
     reg:
       category: required
@@ -33,7 +31,6 @@ properties:
       type: int
       category: required
       description: Width of the PWM comparator in bits
-      generation: define
 
 "#cells":
   - channel

@@ -5,13 +5,12 @@
 #
 
 title: i.MX7D PWM
-version: 0.1
 
 description: >
     This binding gives a base representation of the i.MX7D PWM
 
 inherits:
-    !include pwm.yaml
+    !include [pwm.yaml, base.yaml]
 
 properties:
     compatible:
@@ -27,13 +26,11 @@ properties:
      type: int
      category: required
      description: Set the PWM prescale between 0 and 4096
-     generation: define
 
     rdc:
      type: int
      category: required
      description: Set the RDC permission for this peripheral
-     generation: define
 
 "#cells":
   - channel
